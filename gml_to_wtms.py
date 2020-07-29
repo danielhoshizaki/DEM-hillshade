@@ -73,10 +73,11 @@ if __name__ == "__main__":
     to_dir = Path(join(cwd, "data/processed"))
     hillshade_dir = Path(join(cwd, "data/hillshade"))
 
-    qgis_bin_path = "C:/Program Files/QGIS 3.10/bin"
-    gdaldem_path = Path(join(qgis_bin_path, "gdaldem.exe"))
-    vrt_path = Path(join(qgis_bin_path, "gdalbuildvrt.exe"))
-    tiles_path = Path("C:/Program Files/QGIS 3.10/apps/Python37/Scripts/gdal2tiles.py")
+    gdal_bin_path = "/path/to/gdal/bin"
+    gdal_tiles_path = "/path/to/gdal/tiles/bin"
+    gdaldem_path = Path(join(gdal_bin_path, "gdaldem.exe"))
+    vrt_path = Path(join(gdal_bin_path, "gdalbuildvrt.exe"))
+    tiles_path = Path(join(gdal_tiles_path, "gdal2tiles.py"))
 
     hillshade_vrt_path = Path(join(hillshade_dir, "hillshade.vrt"))
     WTMS_path = Path(join(base, "WTMS"))
