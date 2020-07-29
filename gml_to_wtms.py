@@ -67,46 +67,49 @@ def get_cwd():
 
 if __name__ == "__main__":
 
+    # File system paths for processing temporary files as well as the final output folder
     cwd = get_cwd()
     base = Path(join(cwd, "data"))
     from_dir = Path(join(cwd, "data/raw"))
     to_dir = Path(join(cwd, "data/processed"))
     hillshade_dir = Path(join(cwd, "data/hillshade"))
-
-    gdal_bin_path = "/path/to/gdal/bin"
-    gdal_tiles_path = "/path/to/gdal/tiles/bin"
-    gdaldem_path = Path(join(gdal_bin_path, "gdaldem.exe"))
-    vrt_path = Path(join(gdal_bin_path, "gdalbuildvrt.exe"))
-    tiles_path = Path(join(gdal_tiles_path, "gdal2tiles.py"))
-
     hillshade_vrt_path = Path(join(hillshade_dir, "hillshade.vrt"))
     WTMS_path = Path(join(base, "WTMS"))
 
+    # Make the required folders if they are not present
     if not isdir(to_dir):
         mkdir(to_dir)
 
     if not isdir(hillshade_dir):
         mkdir(hillshade_dir)
 
+    # Manually set paths to GDAL binaries
+    gdal_bin_path = "/path/to/gdal/bin"
+    gdal_tiles_path = "/path/to/gdal/tiles/bin"
+    gdaldem_path = Path(join(gdal_bin_path, "gdaldem.exe"))
+    vrt_path = Path(join(gdal_bin_path, "gdalbuildvrt.exe"))
+    tiles_path = Path(join(gdal_tiles_path, "gdal2tiles.py"))
 
+    # Process the raw DEM files
     for folder in listdir(from_dir):
         if folder.endswith(".zip"):
 
+            # Unzip the data folder
             source_directory = join(from_dir, folder)
             zipfile = ZipFile(source_directory)
 
             for file in zipfile.namelist():
                 if file.endswith(".xml"):
 
-                    #new name uses DEM description followed by a grid number#
+                    # Create an output path
                     split_name = file.split('-')
                     new_file_name = f"{split_name[2]}_{split_name[3]}.tiff"
                     new_file_destination = join(to_dir, new_file_name)
 
+                    # Extract target metadata from the source XML file
                     zipped_xml = zipfile.open(file)
                     xml = bs(zipped_xml, 'lxml-xml')
 
-                    # Extract target metadata from the XML file
                     # Use metadata to create a GeoTiff output
                     height, width = get_dimensions(xml)
                     required_length = height * width
@@ -118,10 +121,8 @@ if __name__ == "__main__":
                     driver = gdal.GetDriverByName('GTiff') # specify the file type
                     outRaster = driver.Create(new_file_destination, height, width, 1, gdal.GDT_Float32)
 
-                    # Lock the raster to the bounding box coordinates
-                    outRaster.SetGeoTransform(geo_transform)
-
                     # Set the projection of the output raster
+                    outRaster.SetGeoTransform(geo_transform)
                     outRasterSRS = osr.SpatialReference()
                     outRasterSRS.ImportFromEPSG(6668)
                     outRaster.SetProjection(outRasterSRS.ExportToWkt())
@@ -132,16 +133,17 @@ if __name__ == "__main__":
                     outband.FlushCache()
                     outband.SetNodataValue(-9999)
 
+                    # Close the file
                     del outRaster, outband
-
                     print(file, "processing complete")
 
-
+    # Trigger GDAL to convert the DEM to a hillshade raster
     command = f'for %f in ("{to_dir}\*.tif") do ("{gdaldem_path}" hillshade -s 50000 %f "{hillshade_dir}/%~nf_hillshade.tif" -compute_edges)'
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     process.communicate()
     print("\nFinished converting DEM to hillshade")
 
+    # Merge all raster files into a VRT
     command = f'"{vrt_path}" "{hillshade_vrt_path}" "{hillshade_dir}\*_hillshade.tif"'
     process = subprocess.Popen(command,
                             stdin=subprocess.PIPE,
@@ -150,6 +152,7 @@ if __name__ == "__main__":
     process.communicate()
     print("Merged all hillshade files into a VRT")
 
+    # Convert the VRT file into a WTMS data folder
     command = f'python "{tiles_path}" -z 0-12 --processes 4 "{hillshade_vrt_path}" "{WTMS_path}"'
     process = subprocess.Popen(command,
                             stdin=subprocess.PIPE,
@@ -157,3 +160,4 @@ if __name__ == "__main__":
                             shell=True)
     process.communicate()
     print("Converted VRT to WTMS folder")
+    print("Processing complete")
