@@ -28,7 +28,6 @@ def get_dimensions(xml):
     return height, width
 
 def get_data(xml, required_length):
-
     # get the data as an array
     data = xml.find('gml:tupleList')
     # get the elevation data and turn into into a numpy matrix
