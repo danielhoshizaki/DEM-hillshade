@@ -57,39 +57,11 @@ def get_geotransform(xml, width, height):
 
     return geo_transform
 
-def get_cwd():
-    try:
-        cwd = dirname(realpath(__file__))
-    except:
-        cwd = getcwd()
-    return cwd
 
-if __name__ == "__main__":
+def convert(from_dir, to_dir):
+    # Convert all XML files from source directory to GeoTiffs in the output directory
 
-    # File system paths for processing temporary files as well as the final output folder
-    cwd = get_cwd()
-    base = Path(join(cwd, "data"))
-    from_dir = Path(join(cwd, "data/raw"))
-    to_dir = Path(join(cwd, "data/processed"))
-    hillshade_dir = Path(join(cwd, "data/hillshade"))
-    hillshade_vrt_path = Path(join(hillshade_dir, "hillshade.vrt"))
-    WTMS_path = Path(join(base, "WTMS"))
-
-    # Make the required folders if they are not present
-    if not isdir(to_dir):
-        mkdir(to_dir)
-
-    if not isdir(hillshade_dir):
-        mkdir(hillshade_dir)
-
-    # Manually set paths to GDAL binaries
-    gdal_bin_path = "/path/to/gdal/bin"
-    gdal_tiles_path = "/path/to/gdal/tiles/bin"
-    gdaldem_path = Path(join(gdal_bin_path, "gdaldem.exe"))
-    vrt_path = Path(join(gdal_bin_path, "gdalbuildvrt.exe"))
-    tiles_path = Path(join(gdal_tiles_path, "gdal2tiles.py"))
-
-    # Process the raw DEM files
+    # Process the zipped XML files
     for folder in listdir(from_dir):
         if folder.endswith(".zip"):
 
@@ -136,7 +108,52 @@ if __name__ == "__main__":
                     del outRaster, outband
                     print(file, "processing complete")
 
-    # Trigger GDAL to convert the DEM to a hillshade raster
+
+def get_cwd():
+    try:
+        cwd = dirname(realpath(__file__))
+    except:
+        cwd = getcwd()
+    return cwd
+
+if __name__ == "__main__":
+
+    # File system paths for processing temporary files as well as the final output folder
+    cwd = get_cwd()
+    base = Path(join(cwd, "data"))
+
+    # Set up the directory paths to where the zipped XML files are and where the converted
+    # GeoTiffs will be placed
+    from_dir = Path(join(cwd, "data/raw"))
+    to_dir = Path(join(cwd, "data/processed"))
+
+    # Make the required output folder if it is not present
+    if not isdir(to_dir):
+        mkdir(to_dir)
+
+    # Convert all zipped XMLs to GeoTiffs
+    convert(from_dir, to_dir)
+
+    # Set up the paths for rendering the new GeoTiff files
+    hillshade_dir = Path(join(cwd, "data/hillshade"))
+    hillshade_vrt_path = Path(join(hillshade_dir, "hillshade.vrt"))
+    WTMS_path = Path(join(base, "WTMS"))
+
+    # Create the hillshade folder if it does not exist
+    if not isdir(hillshade_dir):
+        mkdir(hillshade_dir)
+
+    # Manually set paths to GDAL binaries
+    gdal_bin_path = "/path/to/gdal/bin"
+    gdal_tiles_path = "/path/to/gdal/tiles/bin"
+
+    # Set the path to GDAL binaries
+    gdaldem_path = Path(join(gdal_bin_path, "gdaldem.exe"))
+    vrt_path = Path(join(gdal_bin_path, "gdalbuildvrt.exe"))
+    tiles_path = Path(join(gdal_tiles_path, "gdal2tiles.py"))
+
+    # Use Python to rigger GDAL commands in the command line
+    # Convert the DEM to a hillshade raster
     command = f'for %f in ("{to_dir}\*.tif") do ("{gdaldem_path}" hillshade -s 50000 %f "{hillshade_dir}/%~nf_hillshade.tif" -compute_edges)'
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     process.communicate()
