@@ -7,7 +7,7 @@
 PythonとGDALの組み合わせで上記のウェッブマップが作成されます。
 
 #### インストール
-Pythonを四年程使っていますが一番楽な方法はAnacondaです（多くのOS環境で使用可能）。Anacondaは割と重いので<a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a>を使ってインストールしましょう。ダウンロードが完了したとあとはMinicondaのコマンドラインを開きPythonの仮想環境を立ち上げます（デフォルトのPython3バージョンを使用）：
+まずは<a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a>を使ってPythonと必要なライブラリをインストールしましょう。ダウンロードが完了したと後はMinicondaのコマンドラインを開きPythonの仮想環境を立ち上げます（デフォルトのPython3バージョンを使用）：
 
 ```
 conda create --name myenv
@@ -29,7 +29,7 @@ git clone https://github.com/danielhoshizaki/hillshade
 #### 使い方
 まずは```./data/raw```ディレクトリに数値標高モデルファイルがあることを確認しましょう。他のファイルをダウンロードしている場合はこの段階で```./data/raw```の中に置きます。
 
-Pythonスクリプトを回す前にコードの一部を変える必要があります。```conda```でインストールしたライブラリGDALのパスを指定する必要があります。GDALは協力なソフトですがインストールが非常に複雑になっている。GDALのバイナリーを探すにはLinuxの```find```を使うかWindosの検索ボックスを使います。上記で作成したmyenv仮想環境のディレクトリを探せばすぐに出てきます。探すのはgdaldem.exeとgdalbuildvrt.exeが入っているはディレクトリとgdal2tiles.pyが入っているディレクトリ。見つけたらPythonスクリプトのgdal_bin_pathとgdal_tiles_pathを設定します。
+Pythonスクリプトを回す前にコードの一部を変える必要があります。```conda```でインストールしたライブラリGDALのパスを指定する必要があります。GDALは協力なソフトですがインストールが非常に複雑である為今回は絶対パスを使いましょう。GDALのバイナリーを探すにはLinuxの```find```を使うかWindosの検索ボックスを使います。上記で作成したmyenv仮想環境のディレクトリを探せばすぐに出てきます。探すのはgdaldem.exeとgdalbuildvrt.exeが入っているはディレクトリとgdal2tiles.pyが入っているディレクトリ。見つけたらPythonスクリプトのgdal_bin_pathとgdal_tiles_pathを設定します。
 
 準備が整ったらスクリプトを起動してウェッブマップが出来るのを待ちます。
 
