@@ -1,6 +1,6 @@
 # PythonとGDALを使ってウェッブマップを作ろう
 
-GISデータの処理に多いに役立つオープンソースソフトと言語を紹介します。今回使用するデータは国土地理院が提供している<a href="https://fgd.gsi.go.jp/download/menu.php">基盤地図情報</a>の数値標高モデル。
+オープンソースのPythonとGDALを使って無償でGISデータを処理する方法を紹介します。今回使用するデータは国土地理院が提供している<a href="https://fgd.gsi.go.jp/download/menu.php">基盤地図情報</a>の数値標高モデル。
 
 [![](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/677829/523a02a2-b6b5-6a22-c7b2-76773c887a27.png)](https://danielhoshizaki.github.io/hillshade/)
 
