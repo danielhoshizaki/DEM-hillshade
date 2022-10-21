@@ -9,6 +9,8 @@ This projects provides a convenient way to convert open source GIS data provided
 ### Use
 Download any DEM file over Japan from [this site](https://fgd.gsi.go.jp/download/mapGis.php?tab=dem). Save the zipped folder in the `./data/raw` directory. Run the following command:
 
-> make all
+```
+make all
+```
 
 After a while you will see a newly created directory `./data/WTMS`. Double click on the html file `./data/WTMS/leaflet.html` and you will be able to visualize the DEM data from the zipped folders downloaded from gsi.go.jp.
