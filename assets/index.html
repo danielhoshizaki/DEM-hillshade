@@ -3,7 +3,7 @@
           <head>
             <meta charset="utf-8">
             <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
-            <title href="https://danielhoshizaki.com">Home</title>
+            <title>Hillshade</title>
 
             <!-- Leaflet -->
             <link rel="stylesheet" href="https://danielhoshizaki.com/DEM-hillshade/leaflet.css" />
@@ -64,7 +64,8 @@
             return this._div;
         };
         title.update = function(props) {
-            this._div.innerHTML = "Hillshade";
+            this._div.innerHTML = "Home";
+            this._div.href = "https://danielhoshizaki.com";
         };
         title.addTo(map);
 
