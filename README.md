@@ -1,7 +1,7 @@
 # DEM Raster File Converter
 ## Transforming Open Source GIS Data
 
-[![](./docs/hillshade.PNG)](https://danielhoshizaki.com/DEM-hillshade/)
+[![](./assets/hillshade.PNG)](https://danielhoshizaki.com/DEM-hillshade/)
 Click the image to preview a demo site.
 
 ### Purpose
