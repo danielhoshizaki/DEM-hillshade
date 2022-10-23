@@ -77,47 +77,61 @@ def convert(source_directory: Path, to_dir: Path) -> None:
     """Convert all XML files from source directory to GeoTiffs 
     in the output directory"""
 
-    # Unzip the data folder
-    zipfile = ZipFile(source_directory)
+    if source_directory.name.endswith(".zip"):
+        # Unzip the data folder
+        try:
+            zipfile = ZipFile(source_directory)
+        except Exception as e:
+            logger.warning(f"Failed to process: {source_directory}")
+            return
 
-    for f in zipfile.namelist():
-        if f.endswith(".xml"):
+        for f in zipfile.namelist():
+            if f.endswith(".xml"):
 
-            # Create an output path
-            split_name = f.split('-')
-            new_file_name = f"{split_name[2]}_{split_name[3]}.tif"
-            new_file_destination = to_dir / new_file_name
+                # Create an output path
+                split_name = f.split('-')
+                if "DEM5" in f:
+                    new_file_name = f"{split_name[2]}_{split_name[3]}_{split_name[4]}.tif"
+                else:
+                    new_file_name = f"{split_name[2]}_{split_name[3]}.tif"
+                new_file_destination = to_dir / new_file_name
 
-            # Extract target metadata from the source XML file
-            zipped_xml = zipfile.open(f)
-            xml = bs(zipped_xml, 'lxml-xml')
+                # Extract target metadata from the source XML file
+                try:
+                    zipped_xml = zipfile.open(f)
+                    xml = bs(zipped_xml, 'lxml-xml')
+                except Exception as e:
+                    logger.warning(f"Failed to process: {source_directory}")
+                    return
+                
 
-            # Use metadata to create a GeoTiff output
-            height, width = get_dimensions(xml)
-            required_length = height * width
-            data_array = get_data(xml, required_length)
-            elevation_matrix = data_array.reshape((width, height)) # use the obtained dimensions
-            geo_transform = get_geotransform(xml, width, height)
+                # Use metadata to create a GeoTiff output
+                height, width = get_dimensions(xml)
+                required_length = height * width
+                
+                data_array = get_data(xml, required_length)
+                elevation_matrix = data_array.reshape((width, height)) # use the obtained dimensions
+                geo_transform = get_geotransform(xml, width, height)
 
-            # Create the raster file
-            driver = gdal.GetDriverByName('GTiff') # specify the file type
-            outRaster = driver.Create(new_file_destination.as_posix(), height, width, 1, gdal.GDT_Float32)
+                # Create the raster file
+                driver = gdal.GetDriverByName('GTiff') # specify the file type
+                outRaster = driver.Create(new_file_destination.as_posix(), height, width, 1, gdal.GDT_Float32)
 
-            # Set the projection of the output raster
-            outRaster.SetGeoTransform(geo_transform)
-            outRasterSRS = osr.SpatialReference()
-            outRasterSRS.ImportFromEPSG(6668)
-            outRaster.SetProjection(outRasterSRS.ExportToWkt())
+                # Set the projection of the output raster
+                outRaster.SetGeoTransform(geo_transform)
+                outRasterSRS = osr.SpatialReference()
+                outRasterSRS.ImportFromEPSG(6668)
+                outRaster.SetProjection(outRasterSRS.ExportToWkt())
 
-            # Burn the data
-            outband = outRaster.GetRasterBand(1)
-            outband.WriteArray(elevation_matrix, 0, 0)
-            outband.FlushCache()
-            outband.SetNoDataValue(-9999)
+                # Burn the data
+                outband = outRaster.GetRasterBand(1)
+                outband.WriteArray(elevation_matrix, 0, 0)
+                outband.FlushCache()
+                outband.SetNoDataValue(-9999)
 
-            # Close the file
-            del outRaster, outband
-            logger.info(f, "processing complete")
+                # Close the file
+                del outRaster, outband
+                logger.info(f, "processing complete")
 
 
 def hillshade(f: Path, to_dir: Path) -> None:
@@ -154,8 +168,12 @@ if __name__ == "__main__":
     targets = []
     for folder in from_dir.iterdir():
         if folder.name.endswith(".zip"):
-            targets.append((folder, to_dir))
-    
+            split_name = folder.name.split("-")
+            target_name = f"{split_name[2]}_{split_name[3]}.tif"
+
+            if not (to_dir / target_name).exists():
+                targets.append((folder, to_dir))
+
     with Pool(POOL) as pool:
         results = pool.starmap(convert, targets)
 
@@ -167,7 +185,10 @@ if __name__ == "__main__":
 
     # Use Python to rigger GDAL commands in the command line
     # Convert the DEM to a hillshade raster
-    targets = [(f, hillshade_dir) for f in to_dir.iterdir()]
+    targets = []
+    for f in to_dir.iterdir():
+        if not (hillshade_dir / f.name).exists():
+            targets.append((f, hillshade_dir))
 
     with Pool(POOL) as pool:
         pool.starmap(hillshade, targets)

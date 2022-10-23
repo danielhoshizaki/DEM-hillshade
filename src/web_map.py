@@ -21,6 +21,19 @@ from multiprocessing import Pool
 from loguru import logger
 
 
+def reproject(f: Path, to_dir: Path) -> None:
+    output_path = to_dir / f.name
+    command = f'gdalwarp -t_srs EPSG:3857 {f.as_posix()} {output_path.as_posix()}'
+    subprocess.run(
+        command,
+        shell=True,
+        check=True,
+        stdout=open(os.devnull, "w"),
+        stderr=subprocess.STDOUT,
+    )
+    logger.info(f.name, "done")
+
+
 if __name__ == "__main__":
 
     # Thread count for all tasks
@@ -32,10 +45,23 @@ if __name__ == "__main__":
     
     # Set up the paths for rendering the new GeoTiff files
     hillshade_dir = base / "hillshade"
-    hillshade_vrt_path = hillshade_dir / "hillshade.vrt"
+    reproject_dir = base / "reproject"
+    vrt_path = reproject_dir / "merge.vrt"
+
+    os.makedirs(reproject_dir, exist_ok=True)
+
+    # Reproject all files to web mercator
+    # Convert all zipped XMLs to GeoTiffs
+    targets = []
+    for f in hillshade_dir.iterdir():
+        if not (reproject_dir / f.name).exists():
+            targets.append((f, reproject_dir))
+    
+    with Pool(POOL) as pool:
+        results = pool.starmap(reproject, targets)
 
     # Merge all raster files into a VRT
-    command = f'gdalbuildvrt {hillshade_vrt_path.as_posix()} {hillshade_dir.as_posix()}/*.tif'
+    command = f'gdalbuildvrt {vrt_path.as_posix()} {reproject_dir.as_posix()}/*.tif'
     subprocess.run(
         command,
         shell=True,
@@ -48,7 +74,7 @@ if __name__ == "__main__":
     # Convert the VRT file into a WTMS data folder
     WTMS_path = base / "WTMS"
 
-    command = f'python3 /usr/bin/gdal2tiles.py -z 0-12 --processes 4 {hillshade_vrt_path.as_posix()} {WTMS_path.as_posix()}'
+    command = f'python3 /usr/bin/gdal2tiles.py -z 0-8 --processes 4 {vrt_path.as_posix()} {WTMS_path.as_posix()}'
     subprocess.run(
         command,
         shell=True,
