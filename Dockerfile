@@ -25,7 +25,7 @@ RUN pip3 install --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy all files
-COPY . /workspace
+COPY ./src /workspace/src
 
 # Defualt run configuration
 CMD ["python3", "-u", "src/hillshade.py"]
