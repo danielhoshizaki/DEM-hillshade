@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # Convert the VRT file into a WTMS data folder
     WTMS_path = base / "WTMS"
 
-    command = f'python3 /usr/bin/gdal2tiles.py -z 0-8 --processes 4 {vrt_path.as_posix()} {WTMS_path.as_posix()}'
+    command = f'python3 /usr/bin/gdal2tiles.py -z 0-12  --processes {POOL} {vrt_path.as_posix()} {WTMS_path.as_posix()}'
     subprocess.run(
         command,
         shell=True,

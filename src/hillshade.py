@@ -57,7 +57,8 @@ def get_data(xml, required_length):
     return elevation_array
 
 
-def get_geotransform(xml, width, height):
+def get_geotransform(xml, width, height, fp_offset=1e-7):
+    
     # get the coordinates of the data
     lower_corner = xml.find('gml:lowerCorner').text # in string format, lat long seperated by space
     upper_corner = xml.find('gml:upperCorner').text # in string format, lat long seperated by space
@@ -68,7 +69,7 @@ def get_geotransform(xml, width, height):
     x_resolution = (upper_long - lower_long) / float(height)
     y_resolution = (upper_lat - lower_lat) / float(width)
 
-    geo_transform = (lower_long, x_resolution, 0, upper_lat, 0, -y_resolution)
+    geo_transform = (lower_long, x_resolution + fp_offset, 0, upper_lat, 0, -y_resolution + fp_offset)
 
     return geo_transform
 
@@ -101,10 +102,10 @@ def convert(source_directory: Path, to_dir: Path) -> None:
                     zipped_xml = zipfile.open(f)
                     xml = bs(zipped_xml, 'lxml-xml')
                 except Exception as e:
-                    logger.warning(f"Failed to process: {source_directory}")
-                    return
+                    logger.warning(f"Failed to process: {f}")
+                    logger.warning(e)
+                    continue
                 
-
                 # Use metadata to create a GeoTiff output
                 height, width = get_dimensions(xml)
                 required_length = height * width
@@ -120,7 +121,7 @@ def convert(source_directory: Path, to_dir: Path) -> None:
                 # Set the projection of the output raster
                 outRaster.SetGeoTransform(geo_transform)
                 outRasterSRS = osr.SpatialReference()
-                outRasterSRS.ImportFromEPSG(6668)
+                outRasterSRS.ImportFromEPSG(4612)
                 outRaster.SetProjection(outRasterSRS.ExportToWkt())
 
                 # Burn the data
